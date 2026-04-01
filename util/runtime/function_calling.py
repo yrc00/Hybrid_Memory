@@ -16,7 +16,7 @@ from util.actions.action import (
     MessageAction,
 )
 from .finish import FinishTool
-from .structure_tools import ExploreTreeStructure, ExploreTreeStructure_simple
+from .structure_tools import ExploreTreeStructure, ExploreTreeStructure_simple, make_explore_tree_structure
 from .content_tools import SearchEntityTool, SearchRepoTool
 import logging
 logger = logging.getLogger()
@@ -97,20 +97,15 @@ def get_tools(
         codeact_enable_search_entity: bool = False,
         codeact_enable_tree_structure_traverser: bool = False,
         simple_desc: bool = False,
-        
+        use_dataflow: bool = False,
 ) -> list[ChatCompletionToolParam]:
     tools = [FinishTool]
-    # if codeact_enable_cmd:
-    #     tools.append(CmdRunTool)
     if codeact_enable_search_keyword:
         tools.append(SearchRepoTool)
     if codeact_enable_search_entity:
         tools.append(SearchEntityTool)
     if codeact_enable_tree_structure_traverser:
-        if simple_desc:
-            tools.append(ExploreTreeStructure_simple)
-        else:
-            tools.append(ExploreTreeStructure)
+        tools.append(make_explore_tree_structure(use_dataflow=use_dataflow, simple_desc=simple_desc))
     return tools
 
 

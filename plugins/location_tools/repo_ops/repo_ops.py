@@ -52,9 +52,10 @@ DP_GRAPH: nx.MultiDiGraph | None = None
 
 REPO_SAVE_DIR: str | None = None
 
-def set_current_issue(instance_id: str = None, 
+def set_current_issue(instance_id: str = None,
                       instance_data: dict = None,
-                      dataset: str = "princeton-nlp/SWE-bench_Lite", split: str = "test", rank=0):
+                      dataset: str = "princeton-nlp/SWE-bench_Lite", split: str = "test", rank=0,
+                      use_dataflow: bool = False):
     global CURRENT_ISSUE_ID, CURRENT_INSTANCE
     global ALL_FILE, ALL_CLASS, ALL_FUNC
     assert instance_id or instance_data
@@ -73,17 +74,19 @@ def set_current_issue(instance_id: str = None,
     assert not os.path.exists(REPO_SAVE_DIR), f"{REPO_SAVE_DIR} already exists"
     # create playground
     os.makedirs(REPO_SAVE_DIR)
-    
+
     # setup graph traverser
     global DP_GRAPH_ENTITY_SEARCHER, DP_GRAPH_DEPENDENCY_SEARCHER, DP_GRAPH
-    graph_index_file = f"{GRAPH_INDEX_DIR}/{CURRENT_ISSUE_ID}.pkl"
+    # Use a separate cache file when dataflow edges are requested
+    graph_suffix = '_df' if use_dataflow else ''
+    graph_index_file = f"{GRAPH_INDEX_DIR}/{CURRENT_ISSUE_ID}{graph_suffix}.pkl"
     if not os.path.exists(graph_index_file):
         # pull repo
         repo_dir = setup_repo(instance_data=CURRENT_INSTANCE, repo_base_dir=REPO_SAVE_DIR, dataset=None)
         # parse the repository:
         try:
             os.makedirs(GRAPH_INDEX_DIR, exist_ok=True)
-            G = build_graph(repo_dir, global_import=True)
+            G = build_graph(repo_dir, global_import=True, use_dataflow=use_dataflow)
             with open(graph_index_file, 'wb') as f:
                 pickle.dump(G, f)
             logging.info(f'[{rank}] Processed {CURRENT_ISSUE_ID}')

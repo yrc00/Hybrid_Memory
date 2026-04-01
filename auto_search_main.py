@@ -111,6 +111,33 @@ def get_task_instruction(instance: dict, task: str = 'auto_search', include_pr=F
     return instruction
 
 
+def vanilla_process(result_queue, model_name, messages, temp=1.0):
+    """Single-shot LLM call with no tools, no code execution — model only."""
+    try:
+        response = litellm.completion(
+            model=model_name,
+            messages=messages,
+            temperature=temp,
+        )
+    except litellm.BadRequestError as e:
+        result_queue.put({'error': str(e), 'type': 'BadRequestError'})
+        return
+
+    content = response.choices[0].message.content or ""
+    logging.info("=" * 15)
+    logging.info("\nFinal Response (vanilla):\n" + content)
+
+    traj_data = {
+        'messages': messages + [convert_to_json(response.choices[0].message)],
+        'tools': None,
+        'usage': {
+            'prompt_tokens': response.usage.prompt_tokens,
+            'completion_tokens': response.usage.completion_tokens,
+        },
+    }
+    result_queue.put((content, messages, traj_data))
+
+
 def auto_search_process(result_queue,
                         model_name, messages, fake_user_msg,
                         tools = None,
@@ -143,6 +170,7 @@ def auto_search_process(result_queue,
         
     cur_interation_num = 0
     last_message = None
+    last_message_content = None
     finish = False
     while not finish:
         cur_interation_num += 1
@@ -233,10 +261,15 @@ def auto_search_process(result_queue,
             logging.debug(action.action_type)
             if action.action_type == ActionType.FINISH:
                 final_output = action.thought
+                # If the thought doesn't contain structured output (.py paths),
+                # fall back to the last MESSAGE content which may have the structured format
+                if last_message_content and '.py' not in final_output:
+                    final_output = last_message_content + '\n' + final_output
                 logging.info('='*15)
                 logging.info("\nFinal Response:=\n" + final_output)
                 finish = True # break
             elif action.action_type == ActionType.MESSAGE:
+                last_message_content = action.content
                 logging.debug("thought:\n" + action.content)
                 # check if enough
                 messages.append({"role": "user", "content": fake_user_msg})
@@ -316,7 +349,7 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
 
         logger.info("=" * 60)
         logger.info(f"==== rank {rank} setup localize {instance_id} ====")
-        set_current_issue(instance_data=bug, rank=rank)
+        set_current_issue(instance_data=bug, rank=rank, use_dataflow=args.use_dataflow)
 
         # loc result
         raw_output_loc = []
@@ -337,48 +370,59 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                         - CodeAct instruction
                         - Few-shot Examples
                     """
-                    if args.use_function_calling:
+                    if args.vanilla_mode:
+                        system_prompt = "You are a helpful assistant for software bug localization."
+                    elif args.use_function_calling:
                         system_prompt = function_calling.SYSTEM_PROMPT
                         # system_prompt = CLAUDE_THINKING_INSTRUCTION
                     else:
                         system_prompt = prompt_manager.system_message
-                        
+
                     messages: list[dict] = [{
                         "role": "system",
                         "content": system_prompt
                     }]
-                        
-                    if args.use_example:
+
+                    if not args.vanilla_mode and args.use_example:
                         messages.append({
                             "role": "user",
                             "content": prompt_manager.initial_user_message
                         })
 
-                    logger.info(f"==== {instance_id} start auto search ====")
+                    logger.info(f"==== {instance_id} start {'vanilla' if args.vanilla_mode else 'auto'} search ====")
                     messages.append({
                         "role": "user",
-                        "content": get_task_instruction(bug, include_pr=True, include_hint=True),
+                        "content": get_task_instruction(bug, include_pr=True, include_hint=not args.vanilla_mode),
                     })
-                    
+
                     ctx = mp.get_context('fork')  # use fork to inherit context!!
                     result_queue = ctx.Manager().Queue()
                     tools = None
-                    if args.use_function_calling:
-                        tools = function_calling.get_tools(
-                            codeact_enable_search_keyword=True,
-                            codeact_enable_search_entity=True,
-                            codeact_enable_tree_structure_traverser=True,
-                            simple_desc = args.simple_desc,
-                        )
-                    process = ctx.Process(target=auto_search_process, kwargs={
-                        'result_queue': result_queue,
-                        'model_name': args.model,
-                        'messages': messages,
-                        'fake_user_msg': auto_search.FAKE_USER_MSG_FOR_LOC,
-                        'temp': 1,
-                        'tools': tools,
-                        'use_function_calling': args.use_function_calling,
-                    })
+                    if args.vanilla_mode:
+                        process = ctx.Process(target=vanilla_process, kwargs={
+                            'result_queue': result_queue,
+                            'model_name': args.model,
+                            'messages': messages,
+                            'temp': 1,
+                        })
+                    else:
+                        if args.use_function_calling:
+                            tools = function_calling.get_tools(
+                                codeact_enable_search_keyword=True,
+                                codeact_enable_search_entity=True,
+                                codeact_enable_tree_structure_traverser=True,
+                                simple_desc=args.simple_desc,
+                                use_dataflow=args.use_dataflow,
+                            )
+                        process = ctx.Process(target=auto_search_process, kwargs={
+                            'result_queue': result_queue,
+                            'model_name': args.model,
+                            'messages': messages,
+                            'fake_user_msg': auto_search.FAKE_USER_MSG_FOR_LOC,
+                            'temp': 1,
+                            'tools': tools,
+                            'use_function_calling': args.use_function_calling,
+                        })
                     process.start()
                     process.join(timeout=args.timeout)
                     if process.is_alive():
@@ -389,13 +433,17 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                         raise TimeoutError
                     
                     # loc_result, messages, traj_data = result_queue.get()
-                    result = result_queue.get()
+                    result = result_queue.get(timeout=args.timeout + 60)
                     if isinstance(result, dict) and 'error' in result and result['type'] == 'BadRequestError':
                         raise litellm.BadRequestError(result['error'], args.model, args.model.split('/')[0])
                         # print(f"Error occurred in subprocess: {result['error']}")
                     else:
                         loc_result, messages, traj_data = result
                         
+                except Empty:
+                    logger.warning(f"{instance_id} subprocess exited without result. Try again.")
+                    max_attempt_num = max_attempt_num - 1
+                    continue
                 except litellm.BadRequestError as e:
                     logger.warning(f'{e}. Try again.')
                     continue
@@ -604,9 +652,14 @@ def main():
                  "openai/qwen-32B", "openai/qwen-32B-128k", "openai/ft-qwen-32B", "openai/ft-qwen-32B-128k",
         ]
     )
+    parser.add_argument("--use_dataflow", action="store_true",
+                        help='Build the dependency graph with data flow edges (param_flow, return_flow). '
+                             'Enables the LLM to reason about argument-to-parameter mappings and return value flows.')
+    parser.add_argument("--vanilla_mode", action="store_true",
+                        help='Skip all LocAgent tools (graph/indexing). The model answers using only the problem statement — useful for baseline performance evaluation.')
     parser.add_argument("--use_function_calling", action="store_true",
                         help='Enable function calling features of LLMs. If disabled, codeact will be used to support function calling.')
-    parser.add_argument("--simple_desc", action="store_true", 
+    parser.add_argument("--simple_desc", action="store_true",
                         help="Use simplified function descriptions due to certain LLM limitations. Set to False for better performance when using Claude.")
     
     parser.add_argument("--max_attempt_num", type=int, default=1, 

@@ -41,7 +41,7 @@ Example Usage:
 """
 
 
-_STRUCTURE_EXPLORER_DESCRIPTION = """
+_STRUCTURE_EXPLORER_DESCRIPTION_BASE = """
 Unified repository exploring tool that traverses a pre-built code graph to retrieve dependency structure around specified entities.
 The search can be controlled to traverse upstream (exploring dependencies that entities rely on) or downstream (exploring how entities impact others), with optional limits on traversal depth and filters for entity and dependency types.
 
@@ -66,6 +66,16 @@ Notes:
 * Filtering: Use `entity_type_filter` and `dependency_type_filter` to narrow down the scope of the search, focusing on specific entity types and relationships.
 
 """
+
+_DATAFLOW_DESCRIPTION_ADDON = """
+Data Flow Extensions (available in this graph):
+* 'param_flow' (caller → callee): added at each call site; edge attribute `args_mapping` maps parameter names to the argument expressions passed by the caller.
+* 'return_flow' (callee → caller): added at each call site; edge attribute `assigned_vars` lists the variables in the caller that receive the return value.
+Use these edges to trace how data moves across function boundaries — e.g., find all callers that pass a specific variable as an argument, or locate where a function's return value is consumed.
+
+"""
+
+_STRUCTURE_EXPLORER_DESCRIPTION = _STRUCTURE_EXPLORER_DESCRIPTION_BASE
 
 
 _TREE_EXAMPLE = """
@@ -111,7 +121,18 @@ Example Usage:
 """
 
 
-_STRUCTURE_EXPLORER_PARAMETERS = {
+_DEPENDENCY_TYPE_FILTER_DESC_BASE = (
+    "List of dependency types to include in the traversal. If None, all dependency types are included. "
+    "Available types: 'contains', 'imports', 'invokes', 'inherits'."
+)
+
+_DEPENDENCY_TYPE_FILTER_DESC_DATAFLOW = (
+    "List of dependency types to include in the traversal. If None, all dependency types are included. "
+    "Available types: 'contains', 'imports', 'invokes', 'inherits', "
+    "'param_flow' (caller→callee argument mapping), 'return_flow' (callee→caller return value flow)."
+)
+
+_STRUCTURE_EXPLORER_PARAMETERS_BASE = {
     'type': 'object',
     'properties': {
         'start_entities': {
@@ -151,9 +172,7 @@ _STRUCTURE_EXPLORER_PARAMETERS = {
             'default': None,
         },
         'dependency_type_filter': {
-            'description': (
-                "List of dependency types (e.g., 'contains', 'imports', 'invokes', 'inherits') to include in the traversal. If None, all dependency types are included."
-            ),
+            'description': _DEPENDENCY_TYPE_FILTER_DESC_BASE,
             'type': ['array', 'null'],
             'items': {'type': 'string'},
             'default': None,
@@ -163,21 +182,33 @@ _STRUCTURE_EXPLORER_PARAMETERS = {
 }
 
 
-ExploreTreeStructure = ChatCompletionToolParam(
-    type='function',
-    function=ChatCompletionToolParamFunctionChunk(
-        name='explore_tree_structure',
-        description=_STRUCTURE_EXPLORER_DESCRIPTION + _TREE_EXAMPLE,
-        parameters=_STRUCTURE_EXPLORER_PARAMETERS
-    ),
-)
+def make_explore_tree_structure(use_dataflow: bool = False, simple_desc: bool = False) -> ChatCompletionToolParam:
+    """Return an ExploreTreeStructure tool whose description and parameter hints
+    reflect whether data flow edges (param_flow / return_flow) are present in the graph."""
+    import copy
+    params = copy.deepcopy(_STRUCTURE_EXPLORER_PARAMETERS_BASE)
+    if use_dataflow:
+        params['properties']['dependency_type_filter']['description'] = _DEPENDENCY_TYPE_FILTER_DESC_DATAFLOW
+        desc = _STRUCTURE_EXPLORER_DESCRIPTION_BASE + _DATAFLOW_DESCRIPTION_ADDON
+        example = _TREE_EXAMPLE
+    else:
+        desc = _STRUCTURE_EXPLORER_DESCRIPTION_BASE
+        example = _TREE_EXAMPLE
+
+    if simple_desc:
+        desc = _STRUCTURE_EXPLORER_DESCRIPTION_simple
+        example = _TREE_EXAMPLE_simple
+
+    return ChatCompletionToolParam(
+        type='function',
+        function=ChatCompletionToolParamFunctionChunk(
+            name='explore_tree_structure',
+            description=desc + example,
+            parameters=params,
+        ),
+    )
 
 
-ExploreTreeStructure_simple = ChatCompletionToolParam(
-    type='function',
-    function=ChatCompletionToolParamFunctionChunk(
-        name='explore_tree_structure',
-        description=_STRUCTURE_EXPLORER_DESCRIPTION_simple + _TREE_EXAMPLE_simple,
-        parameters=_STRUCTURE_EXPLORER_PARAMETERS
-    ),
-)
+# Convenience module-level instances (use_dataflow=False)
+ExploreTreeStructure = make_explore_tree_structure(use_dataflow=False, simple_desc=False)
+ExploreTreeStructure_simple = make_explore_tree_structure(use_dataflow=False, simple_desc=True)

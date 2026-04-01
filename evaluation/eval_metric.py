@@ -110,6 +110,9 @@ def load_gt_dict(gt_file, level):
         gt_locs = []
         instance_id = gt_data['instance_id']
         file_changes = gt_data['file_changes']
+        if not file_changes:
+            gt_dict[instance_id] = gt_locs
+            continue
         for file_change in file_changes:
             if level == 'file':
                 gt_locs.append(file_change['file'])
@@ -196,16 +199,16 @@ def cal_metrics_w_file(gt_file, loc_file, key,
                     pred_dict[ins] = pred_modules
     else:
         pred_dict = convert_solutions_dict(load_jsonl(loc_file), key=key)
-        for ins in pred_dict:
-            pred_funcs = pred_dict[ins]
-            pred_modules = []
-            for i, pf in enumerate(pred_funcs):
-                if level == 'function':
+        if level == 'function':
+            for ins in pred_dict:
+                pred_funcs = pred_dict[ins]
+                pred_modules = []
+                for pf in pred_funcs:
                     if pf.endswith('.__init__'):
                         pf = pf[:(len(pf)-len('.__init__'))]
                     if pf not in pred_modules:
                         pred_modules.append(pf)
-            pred_dict[ins] = pred_modules
+                pred_dict[ins] = pred_modules
         
     _gt_labels = []
     _pred_labels = []

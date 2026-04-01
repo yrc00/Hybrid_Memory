@@ -22,8 +22,13 @@ def parse_raw_loc_output(raw_output, valid_files):
         if folder not in valid_top_folder:
             valid_top_folder.append(folder)
     
-    # Remove the triple backticks and any surrounding whitespace
-    raw_output = raw_output.strip('` \n')
+    # Extract content from triple backtick code blocks if present,
+    # otherwise fall back to stripping individual backtick chars
+    code_blocks = re.findall(r'```[^\n]*\n(.*?)```', raw_output, re.DOTALL)
+    if code_blocks:
+        raw_output = '\n'.join(code_blocks)
+    else:
+        raw_output = raw_output.strip('` \n')
     file_list, loc_edit_list = [], []
     
     current_file = None

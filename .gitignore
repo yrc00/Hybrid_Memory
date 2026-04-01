@@ -173,6 +173,7 @@ test_*.py
 .idea
 .DS_Store
 
+models/baseline/
 baselines/
 sft/wandb
 sft/qwen-w-lora-test
@@ -183,3 +184,6 @@ sft/
 config.toml
 unsloth_compiled_cache/
 wandb/
+
+# results
+results/

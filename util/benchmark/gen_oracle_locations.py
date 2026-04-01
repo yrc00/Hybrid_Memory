@@ -533,15 +533,15 @@ if __name__ == "__main__":
     # print(result)
     
     
-    if args.dataset == 'princeton-nlp/SWE-bench_Lite' and args.split == 'test':
-        generate_oracle_locations_for_dataset(args.dataset, args.split, 
-                                              args.output_dir, args.repo_base_dir)
-    elif args.dataset == 'princeton-nlp/SWE-bench' and args.split == 'train':
+    if args.dataset == 'princeton-nlp/SWE-bench' and args.split == 'train':
         with open(args.selected_list_file, 'r') as f:
             selected_list = json.loads(f.read())
-        generate_oracle_locations_for_dataset(args.dataset, args.split, 
-                                              args.output_dir, args.repo_base_dir, 
+        generate_oracle_locations_for_dataset(args.dataset, args.split,
+                                              args.output_dir, args.repo_base_dir,
                                               selected_list)
+    else:
+        generate_oracle_locations_for_dataset(args.dataset, args.split,
+                                              args.output_dir, args.repo_base_dir)
         
     if args.loc_bench:
         generate_oracle_locations_for_data_file(args.dataset, args.gen_n_limit,
