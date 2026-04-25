@@ -8,7 +8,11 @@ import logging
 
 
 def parse_class_docstrings(target_file: str) -> list:
+<<<<<<< HEAD
     with open(target_file, 'r', encoding='utf-8', errors='replace') as f:
+=======
+    with open(target_file, 'r') as f:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         source_code = f.read()
         
     # Parse the code string
@@ -57,7 +61,11 @@ def parse_class_docstrings(target_file: str) -> list:
 
 
 def parse_import_nodes(target_file):
+<<<<<<< HEAD
     with open(target_file, 'r', encoding='utf-8', errors='replace') as f:
+=======
+    with open(target_file, 'r') as f:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         source_code = f.read()
 
     # Parse the source code
@@ -95,7 +103,11 @@ def parse_import_nodes(target_file):
 
 def parse_comment_nodes(target_file):
     comment_nodes = []
+<<<<<<< HEAD
     with open(target_file, 'r', encoding='utf-8', errors='replace') as f:
+=======
+    with open(target_file, 'r') as f:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         source_code = f.read()
     # Tokenize the source code to find comments and their locations
     source = StringIO(source_code)
@@ -201,7 +213,11 @@ def parse_global_var_from_code(file_content: str) -> dict[str, dict]:
 
 
 def parse_global_var_from_file(file_path):
+<<<<<<< HEAD
     with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+=======
+    with open(file_path, 'r') as f:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         file_content = f.read()
     global_vars = parse_global_var_from_code(file_content)
     return global_vars
@@ -221,7 +237,11 @@ def parse_python_file(file_path, file_content=None):
     """
     if file_content is None:
         try:
+<<<<<<< HEAD
             with open(file_path, 'r', encoding='utf-8', errors='replace') as file:
+=======
+            with open(file_path, "r") as file:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 file_content = file.read()
                 parsed_data = ast.parse(file_content)
         except Exception as e:  # Catch all types of exceptions

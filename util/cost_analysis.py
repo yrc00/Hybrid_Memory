@@ -87,10 +87,14 @@ def calc_cost(model_name, input_tokens, output_tokens):
         return 0
     elif 'qwen' in model_name.lower():
         return 0
+<<<<<<< HEAD
     elif model_name not in MODEL_COST_PER_INPUT or model_name not in MODEL_COST_PER_OUTPUT:
         logger.warning(f"Cost data not found for model '{model_name}', returning 0.")
         return 0
 
+=======
+    
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     cost = (
         MODEL_COST_PER_INPUT[model_name] * input_tokens
         + MODEL_COST_PER_OUTPUT[model_name] * output_tokens

@@ -10,6 +10,7 @@ from datasets import load_dataset
 import collections
 import re
 
+<<<<<<< HEAD
 filtered_instances=[
 #  'pytest-dev__pytest-5227',
 #  'sympy__sympy-15345',
@@ -37,6 +38,35 @@ filtered_instances=[
 #  'sympy__sympy-21055',
 #  'django__django-15213',
 #  'django__django-15902', 
+=======
+filtered_instances=['pytest-dev__pytest-5227',
+ 'sympy__sympy-15345',
+ 'sympy__sympy-21614',
+ 'scikit-learn__scikit-learn-13439',
+ 'sympy__sympy-11400',
+ 'sympy__sympy-19487',
+ 'sympy__sympy-15308',
+ 'django__django-12915',
+ 'sympy__sympy-20590',
+ 'sympy__sympy-17022',
+ 'django__django-11099',
+ 'django__django-13220',
+ 'django__django-11964',
+ 'matplotlib__matplotlib-25332',
+ 'django__django-10914',
+ 'django__django-14915',
+ 'django__django-11049',
+ 'django__django-11564',
+ 'sympy__sympy-17655',
+ 'sympy__sympy-16106',
+ 'sympy__sympy-12171',
+ 'django__django-15400',
+ 'django__django-14411',
+ 'sympy__sympy-21055',
+ 'django__django-15213',
+ 'django__django-15902',
+ 
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
  ]
 
 def _dcg(target: Tensor) -> Tensor:

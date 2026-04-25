@@ -159,6 +159,7 @@ def stage_all_files(repo_dir):
 def checkout_commit(repo_dir, commit_hash):
     try:
         subprocess.run(
+<<<<<<< HEAD
             ["git", "fetch", "origin", commit_hash],
             cwd=repo_dir,
             check=False,
@@ -188,6 +189,14 @@ def checkout_commit(repo_dir, commit_hash):
                 text=True,
                 capture_output=True,
             )
+=======
+            ["git", "reset", "--hard", commit_hash],
+            cwd=repo_dir,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     except subprocess.CalledProcessError as e:
         logger.error(e.stderr)
         raise e

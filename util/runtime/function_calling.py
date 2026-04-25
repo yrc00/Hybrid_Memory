@@ -18,17 +18,23 @@ from util.actions.action import (
 from .finish import FinishTool
 from .structure_tools import ExploreTreeStructure, ExploreTreeStructure_simple, make_explore_tree_structure
 from .content_tools import SearchEntityTool, SearchRepoTool
+<<<<<<< HEAD
 from .df_tools import ALL_DF_TOOLS
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 import logging
 logger = logging.getLogger()
 
 ALL_FUNCTIONS = ['explore_tree_structure', 'search_code_snippets', 'get_entity_contents']
+<<<<<<< HEAD
 ALL_DF_FUNCTIONS = [
     'get_exception_boundaries',
     'get_value_transforms',
     'get_inherit_meta',
     'get_invoke_meta',
 ]
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 SYSTEM_PROMPT = """You are a helpful assistant that can interact with a computer to solve tasks.
 <IMPORTANT>
@@ -36,6 +42,7 @@ SYSTEM_PROMPT = """You are a helpful assistant that can interact with a computer
 </IMPORTANT>
 """
 
+<<<<<<< HEAD
 SYSTEM_PROMPT_DF = """You are a helpful assistant that can interact with a computer to solve tasks.
 <IMPORTANT>
 * If user provides a path, you should NOT assume it's relative to the current working directory. Instead, you should explore the file system to find the file before working on it.
@@ -50,6 +57,8 @@ When localizing bugs, follow this reasoning order:
 ※ 실제 수정 위치는 값이 읽히는 곳이 아닌, 값이 변환되거나 결정되는 중간 지점에 있을 가능성이 높다.
 """
 
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 def combine_thought(action: Action, thought: str) -> Action:
     if hasattr(action, 'raw_content') and thought:
@@ -88,7 +97,11 @@ def response_to_actions(response: ModelResponse) -> list[Action]:
                 else:
                     action = FinishAction()
                 
+<<<<<<< HEAD
             elif tool_call.function.name in ALL_FUNCTIONS + ALL_DF_FUNCTIONS:
+=======
+            elif tool_call.function.name in ALL_FUNCTIONS:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 # We implement this in agent_skills, which can be used via Jupyter
                 func_name = tool_call.function.name
                 code = f'print({func_name}(**{arguments}))'
@@ -127,6 +140,7 @@ def get_tools(
         tools.append(SearchEntityTool)
     if codeact_enable_tree_structure_traverser:
         tools.append(make_explore_tree_structure(use_dataflow=use_dataflow, simple_desc=simple_desc))
+<<<<<<< HEAD
     if use_dataflow:
         tools.extend(ALL_DF_TOOLS)
     return tools
@@ -139,3 +153,8 @@ def get_active_functions(use_dataflow: bool = False) -> list[str]:
         funcs.extend(ALL_DF_FUNCTIONS)
     return funcs
 
+=======
+    return tools
+
+
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e

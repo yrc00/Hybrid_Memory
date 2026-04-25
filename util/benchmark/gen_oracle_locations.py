@@ -101,7 +101,11 @@ def get_module_from_line_number_with_file_structure(line, file_structure,
 
 def apply_patch_str(patch, apply_file_path, hunk_size):
     # Write the patch string to a temporary file
+<<<<<<< HEAD
     with tempfile.NamedTemporaryFile(delete=False, mode='w', encoding='utf-8') as temp_patch_file:
+=======
+    with tempfile.NamedTemporaryFile(delete=False, mode='w') as temp_patch_file:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         temp_patch_file.write(patch)
         temp_patch_file_path = temp_patch_file.name
 
@@ -182,6 +186,7 @@ def group_patch_by_file(patch):
     patch_lines = patch.splitlines()
 
     current_file = None
+<<<<<<< HEAD
     pending_minus_line = None
     file_header_pattern = r"^(---|\+\+\+) (.+)"
 
@@ -209,6 +214,15 @@ def group_patch_by_file(patch):
                     patch_by_file[current_file].append(f"{pending_minus_line}\n")
                     pending_minus_line = None
                 patch_by_file[current_file].append(f"{line}\n")
+=======
+    file_header_pattern = r"^(---|\+\+\+) (.+)"
+
+    for line in patch_lines:
+        match = re.match(file_header_pattern, line)
+        if match:
+            current_file = re.sub(r"^(a/|b/)", "", match.group(2))
+            patch_by_file[current_file].append(f"{line}\n")
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         else:
             if current_file:
                 patch_by_file[current_file].append(f"{line}\n")
@@ -216,7 +230,11 @@ def group_patch_by_file(patch):
     return {file: "".join(hunks) for file, hunks in patch_by_file.items()}
 
 
+<<<<<<< HEAD
 def extract_module_from_patch(instance, repo_dir, max_edit_file_num=100,
+=======
+def extract_module_from_patch(instance, repo_dir, max_edit_file_num=1,
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                               logger=None, 
                               include_gvar=False,
                               rank=0):
@@ -242,6 +260,7 @@ def extract_module_from_patch(instance, repo_dir, max_edit_file_num=100,
         if not file.endswith('.py'): continue
         target_file_path = os.path.join(repo_dir, file)
         
+<<<<<<< HEAD
         # initial file structure (empty if new file added by patch)
         if os.path.exists(target_file_path):
             class_info, function_names, file_lines = parse_python_file(target_file_path)
@@ -255,11 +274,22 @@ def extract_module_from_patch(instance, repo_dir, max_edit_file_num=100,
             old_import_nodes = []
             old_comment_nodes = []
             old_docstring_nodes = []
+=======
+        # initial file structure
+        class_info, function_names, file_lines = parse_python_file(target_file_path)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         old_file_structure = {
             "classes": class_info,
             "functions": function_names,
             "text": file_lines,
         }
+<<<<<<< HEAD
+=======
+        old_global_vars = parse_global_var_from_file(target_file_path)
+        old_import_nodes = parse_import_nodes(target_file_path)
+        old_comment_nodes = parse_comment_nodes(target_file_path)
+        old_docstring_nodes = parse_class_docstrings(target_file_path)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         
         # Extract the partial patch for this file
         partial_patch = patch_by_file.get(file)
@@ -270,7 +300,12 @@ def extract_module_from_patch(instance, repo_dir, max_edit_file_num=100,
         # Apply the patch
         success, offsets = apply_patch_str(partial_patch, target_file_path, len(file_change['hunks']))
         if not success:
+<<<<<<< HEAD
             continue
+=======
+            # TODO: assert
+            return None
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         
         # new file structure
         class_info, function_names, file_lines = parse_python_file(target_file_path)
@@ -376,6 +411,7 @@ def extract_module_from_patch(instance, repo_dir, max_edit_file_num=100,
 def generate_oracle_locations_for_dataset(dataset, split,
                                      output_dir='evaluation/gt_location',
                                      repo_base_dir='playground',
+<<<<<<< HEAD
                                      selected_list=None,
                                      local_data_file=None,
                                      max_edit_file_num=5):
@@ -383,6 +419,10 @@ def generate_oracle_locations_for_dataset(dataset, split,
         bench_data = load_jsonl(local_data_file)
     else:
         bench_data = load_dataset(dataset, split=split)
+=======
+                                     selected_list=None):
+    bench_data = load_dataset(dataset, split=split)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     # current_date = datetime.now().strftime('%Y-%m-%d')
     # output_file = f'evaluation/gt_data/SWE-bench_Lite/gt_modules_data_{current_date}.jsonl',
     output_file = os.path.join(output_dir, dataset.split('/')[-1], split, 'gt_location.jsonl')
@@ -405,11 +445,25 @@ def generate_oracle_locations_for_dataset(dataset, split,
             repo_dir = setup_repo(instance_data=instance, repo_base_dir=repo_base_dir,
                                 dataset=dataset, split=split)
         
+<<<<<<< HEAD
             file_changes = extract_module_from_patch(instance, repo_dir, max_edit_file_num=max_edit_file_num)
             if not file_changes:
                 logging.info(f"Null (no extractable modules): {instance['instance_id']}")
                 empty_edit_list.append(instance['instance_id'])
                 file_changes = None
+=======
+            file_changes = extract_module_from_patch(instance, repo_dir)
+            if not file_changes:
+                empty_edit_list.append(instance['instance_id'])
+                # continue
+            # else:
+            #     for fchange in file_changes:
+            #         if not fchange['changes']: # or \
+            #             # "edited_modules" not in fchange['changes'] or \
+            #             # not fchange['changes']["edited_modules"]:
+            #             empty_edit_list.append(instance['instance_id'])
+            #             # continue
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
             append_to_jsonl({
                     'instance_id': instance['instance_id'],
                     'file_changes': file_changes,
@@ -418,10 +472,17 @@ def generate_oracle_locations_for_dataset(dataset, split,
                     'problem_statement': instance['problem_statement'],
                     'patch': instance['patch']
                 }, output_file)
+<<<<<<< HEAD
         except (FileNotFoundError, subprocess.CalledProcessError) as e:
             logging.info(e)
             error_list.append(instance['instance_id'])
             continue
+=======
+        except FileNotFoundError as e:
+            logging.info(e)
+            error_list.append(instance['instance_id'])
+            break
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     print(empty_edit_list)
     print(error_list)
     return output_file
@@ -542,9 +603,14 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="princeton-nlp/SWE-bench_Lite")
     parser.add_argument("--split", type=str, default="test")
     parser.add_argument('--selected_list_file', type=str, default='playground/repo_base')
+<<<<<<< HEAD
     parser.add_argument('--local_data_file', type=str, default=None)
     parser.add_argument('--loc_bench', action='store_true')
     parser.add_argument("--max_edit_file_num", type=int, default=5)
+=======
+    parser.add_argument('--loc_bench', action='store_true')
+    parser.add_argument("--max_edit_file_num", type=int, default=1)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     parser.add_argument("--num_processes", type=int, default=1)
     parser.add_argument("--gen_n_limit", type=int, default=0)
     # parser.add_argument('--merge_init', action='store_true')
@@ -564,6 +630,7 @@ if __name__ == "__main__":
             selected_list = json.loads(f.read())
         generate_oracle_locations_for_dataset(args.dataset, args.split,
                                               args.output_dir, args.repo_base_dir,
+<<<<<<< HEAD
                                               selected_list,
                                               max_edit_file_num=args.max_edit_file_num)
     else:
@@ -571,6 +638,12 @@ if __name__ == "__main__":
                                               args.output_dir, args.repo_base_dir,
                                               local_data_file=args.local_data_file,
                                               max_edit_file_num=args.max_edit_file_num)
+=======
+                                              selected_list)
+    else:
+        generate_oracle_locations_for_dataset(args.dataset, args.split,
+                                              args.output_dir, args.repo_base_dir)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         
     if args.loc_bench:
         generate_oracle_locations_for_data_file(args.dataset, args.gen_n_limit,

@@ -17,7 +17,11 @@ def list_folders(path):
 
 
 def run(rank, repo_queue, repo_path, out_path,
+<<<<<<< HEAD
         download_repo=False, instance_data=None, use_dataflow=False):
+=======
+        download_repo=False, instance_data=None):
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     while True:
         try:
             repo_name = repo_queue.get_nowait()
@@ -26,12 +30,16 @@ def run(rank, repo_queue, repo_path, out_path,
             break
 
         output_file = f'{osp.join(out_path, repo_name)}.pkl'
+<<<<<<< HEAD
         output_file_df = f'{osp.join(out_path, repo_name)}_df.pkl'
 
         base_exists = osp.exists(output_file)
         df_exists = osp.exists(output_file_df)
 
         if base_exists and (not use_dataflow or df_exists):
+=======
+        if osp.exists(output_file):
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
             print(f'[{rank}] {repo_name} already processed, skipping.')
             continue
 
@@ -41,8 +49,13 @@ def run(rank, repo_queue, repo_path, out_path,
             os.makedirs(repo_base_dir, exist_ok=True)
             # clone and check actual repo
             try:
+<<<<<<< HEAD
                 repo_dir = setup_repo(instance_data=instance_data[repo_name],
                                       repo_base_dir=repo_base_dir,
+=======
+                repo_dir = setup_repo(instance_data=instance_data[repo_name], 
+                                      repo_base_dir=repo_base_dir, 
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                                       dataset=None)
             except subprocess.CalledProcessError as e:
                 print(f'[{rank}] Error checkout commit {repo_name}: {e}')
@@ -52,6 +65,7 @@ def run(rank, repo_queue, repo_path, out_path,
 
         print(f'[{rank}] Start process {repo_name}')
         try:
+<<<<<<< HEAD
             if not base_exists:
                 G = build_graph(repo_dir, global_import=True)
                 with open(output_file, 'wb') as f:
@@ -63,6 +77,12 @@ def run(rank, repo_queue, repo_path, out_path,
                 with open(output_file_df, 'wb') as f:
                     pickle.dump(G_df, f)
                 print(f'[{rank}] Processed {repo_name} (hybrid memory)')
+=======
+            G = build_graph(repo_dir, global_import=True)
+            with open(output_file, 'wb') as f:
+                pickle.dump(G, f)
+            print(f'[{rank}] Processed {repo_name}')
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         except Exception as e:
             print(f'[{rank}] Error processing {repo_name}: {e}')
 
@@ -78,10 +98,15 @@ if __name__ == '__main__':
                         help='The directory where you plan to pull or have already pulled the codebase.')
     parser.add_argument('--index_dir', type=str, default='index_data', 
                         help='The base directory where the generated graph index will be saved.')
+<<<<<<< HEAD
     parser.add_argument('--instance_id_path', type=str, default='',
                         help='Path to a file containing a list of selected instance IDs.')
     parser.add_argument('--use_dataflow', action='store_true',
                         help='Also generate _df.pkl with hybrid memory edges (exception_boundary, value_transform, enriched inherit/invoke).')
+=======
+    parser.add_argument('--instance_id_path', type=str, default='', 
+                        help='Path to a file containing a list of selected instance IDs.')
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     args = parser.parse_args()
 
     
@@ -127,7 +152,11 @@ if __name__ == '__main__':
         run,
         nprocs=args.num_processes,
         args=(queue, args.repo_path, args.index_dir,
+<<<<<<< HEAD
               args.download_repo, selected_instance_data, args.use_dataflow),
+=======
+              args.download_repo, selected_instance_data),
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         join=True
     )
 

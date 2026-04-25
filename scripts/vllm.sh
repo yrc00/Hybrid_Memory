@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ss -tulpn | 8000
 # CUDA_VISIBLE_DEVICES=2 bash scripts/vllm.sh
 # tmux new-session -d -s vllm && \
@@ -7,6 +8,11 @@
 # python -m vllm.entrypoints.openai.api_server \
 #   --model ./models/baseline/Qwen2.5-Coder-7B-CL \
 #   --served-model-name Qwen/Qwen2.5-Coder-7B-CL \
+=======
+# python -m vllm.entrypoints.openai.api_server \
+#   --model ./models/baseline/Qwen2.5-Coder-7B \
+#   --served-model-name Qwen/Qwen2.5-Coder-7B-Instruct \
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 #   --host 0.0.0.0 \
 #   --port 8000 \
 #   --tensor-parallel-size 1 \
@@ -39,6 +45,7 @@
 #   --max-num-seqs 64 \            # 기본값 256 → 워밍업 메모리 압력 감소
 #   --gpu-memory-utilization 0.85  # 기본값 0.90
 
+<<<<<<< HEAD
 # python -m vllm.entrypoints.openai.api_server \
 #   --model ./models/baseline/Qwen3-Coder-30B \
 #   --served-model-name Qwen/Qwen3-Coder-30B-A3B-Instruct \
@@ -56,3 +63,14 @@ python -m vllm.entrypoints.openai.api_server \
   --port 8000 \
   --tensor-parallel-size 1 \
   --max-model-len 32768
+=======
+python -m vllm.entrypoints.openai.api_server \
+  --model ./models/baseline/Qwen3-Coder-30B \
+  --served-model-name Qwen/Qwen3-Coder-30B-A3B-Instruct \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --tensor-parallel-size 2 \
+  --max-model-len 32768 \
+  --max-num-seqs 32 \
+  --gpu-memory-utilization 0.88
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e

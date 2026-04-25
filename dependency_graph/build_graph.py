@@ -9,7 +9,11 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
+<<<<<<< HEAD
 VERSION = 'v3.0'
+=======
+VERSION = 'v2.3'
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 NODE_TYPE_DIRECTORY = 'directory'
 NODE_TYPE_FILE = 'file'
 NODE_TYPE_CLASS = 'class'
@@ -18,12 +22,21 @@ EDGE_TYPE_CONTAINS = 'contains'
 EDGE_TYPE_INHERITS = 'inherits'
 EDGE_TYPE_INVOKES = 'invokes'
 EDGE_TYPE_IMPORTS = 'imports'
+<<<<<<< HEAD
 EDGE_TYPE_EXCEPTION_BOUNDARY = 'exception_boundary'
 EDGE_TYPE_VALUE_TRANSFORM = 'value_transform'
 
 VALID_NODE_TYPES = [NODE_TYPE_DIRECTORY, NODE_TYPE_FILE, NODE_TYPE_CLASS, NODE_TYPE_FUNCTION]
 VALID_EDGE_TYPES = [EDGE_TYPE_CONTAINS, EDGE_TYPE_INHERITS, EDGE_TYPE_INVOKES, EDGE_TYPE_IMPORTS,
                     EDGE_TYPE_EXCEPTION_BOUNDARY, EDGE_TYPE_VALUE_TRANSFORM]
+=======
+EDGE_TYPE_PARAM_FLOW = 'param_flow'
+EDGE_TYPE_RETURN_FLOW = 'return_flow'
+
+VALID_NODE_TYPES = [NODE_TYPE_DIRECTORY, NODE_TYPE_FILE, NODE_TYPE_CLASS, NODE_TYPE_FUNCTION]
+VALID_EDGE_TYPES = [EDGE_TYPE_CONTAINS, EDGE_TYPE_INHERITS, EDGE_TYPE_INVOKES, EDGE_TYPE_IMPORTS,
+                    EDGE_TYPE_PARAM_FLOW, EDGE_TYPE_RETURN_FLOW]
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 SKIP_DIRS = ['.github', '.git']
 def is_skip_dir(dirname):
@@ -460,11 +473,17 @@ def build_graph(repo_path, fuzzy_search=True, global_import=False, use_dataflow=
                         graph.add_edge(node, global_fuzzy_node, type=EDGE_TYPE_INHERITS)
 
     if use_dataflow:
+<<<<<<< HEAD
         add_hybrid_memory_edges(graph)
+=======
+        add_dataflow_edges_to_graph(graph, fuzzy_search=fuzzy_search,
+                                    global_name_dict=global_name_dict if global_import else None)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
     return graph
 
 
+<<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # vLLM description helper
 # ---------------------------------------------------------------------------
@@ -986,6 +1005,149 @@ def add_hybrid_memory_edges(graph):
     build_value_transform_edges(graph)
     enrich_inherit_edges(graph)
     enrich_invoke_edges(graph)
+=======
+def analyze_dataflow(node, code_tree):
+    """
+    Analyze a function/class node's body to extract dataflow info at each call site.
+
+    Returns a list of tuples:
+        (callee_name, pos_args, kw_args, assigned_vars)
+    - callee_name: str, the bare function/method name being called
+    - pos_args: list[str], string representations of positional arguments
+    - kw_args: dict[str, str], keyword argument name -> string representation
+    - assigned_vars: list[str], variables that receive the return value (empty if unused)
+    """
+    caller_name = node.split(':')[-1].split('.')[-1]
+    call_sites = []
+
+    def arg_to_str(arg_node):
+        try:
+            return ast.unparse(arg_node)
+        except AttributeError:
+            if isinstance(arg_node, ast.Name):
+                return arg_node.id
+            elif isinstance(arg_node, ast.Constant):
+                return repr(arg_node.value)
+            return '<expr>'
+
+    def get_assignment_targets(targets):
+        assigned = []
+        for target in targets:
+            for sub in ast.walk(target):
+                if isinstance(sub, ast.Name):
+                    assigned.append(sub.id)
+        return assigned
+
+    def record_call(call_node, assigned_vars):
+        if isinstance(call_node.func, ast.Name):
+            callee_name = call_node.func.id
+        elif isinstance(call_node.func, ast.Attribute):
+            callee_name = call_node.func.attr
+        else:
+            return
+        pos_args = [arg_to_str(a) for a in call_node.args]
+        kw_args = {kw.arg: arg_to_str(kw.value) for kw in call_node.keywords if kw.arg}
+        call_sites.append((callee_name, pos_args, kw_args, assigned_vars))
+
+    def traverse(ast_node):
+        for child in ast.iter_child_nodes(ast_node):
+            # Skip inner function/class definitions
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue
+            if isinstance(child, ast.Assign) and isinstance(child.value, ast.Call):
+                assigned = get_assignment_targets(child.targets)
+                record_call(child.value, assigned)
+                traverse(child.value)
+            elif isinstance(child, ast.AnnAssign) and child.value and isinstance(child.value, ast.Call):
+                assigned = [child.target.id] if isinstance(child.target, ast.Name) else []
+                record_call(child.value, assigned)
+                traverse(child.value)
+            elif isinstance(child, ast.Call):
+                record_call(child, [])
+                traverse(child)
+            else:
+                traverse(child)
+
+    for ast_node in ast.walk(code_tree):
+        if isinstance(ast_node, (ast.FunctionDef, ast.AsyncFunctionDef)) and ast_node.name == caller_name:
+            traverse(ast_node)
+            break
+        elif isinstance(ast_node, ast.ClassDef) and ast_node.name == caller_name:
+            for body_item in ast_node.body:
+                if isinstance(body_item, ast.FunctionDef) and body_item.name == '__init__':
+                    traverse(body_item)
+                    break
+            break
+
+    return call_sites
+
+
+def add_dataflow_edges_to_graph(graph, fuzzy_search=True, global_name_dict=None):
+    """
+    Add param_flow and return_flow edges to an already-built graph.
+
+    param_flow (caller -> callee): captures argument-to-parameter mapping at each call site.
+    return_flow (callee -> caller): captures which variables in the caller receive the return value.
+    """
+    if global_name_dict is None:
+        global_name_dict = defaultdict(list)
+
+    for node, attributes in list(graph.nodes(data=True)):
+        if attributes.get('type') not in [NODE_TYPE_CLASS, NODE_TYPE_FUNCTION]:
+            continue
+
+        try:
+            caller_code_tree = ast.parse(graph.nodes[node]['code'])
+        except Exception:
+            continue
+
+        callee_nodes, callee_alias = find_all_possible_callee(node, graph)
+        if fuzzy_search:
+            callee_name_dict = defaultdict(list)
+            for callee_node in set(callee_nodes):
+                callee_name = callee_node.split(':')[-1].split('.')[-1]
+                callee_name_dict[callee_name].append(callee_node)
+            for alias, callee_node in callee_alias.items():
+                callee_name_dict[alias].append(callee_node)
+        else:
+            callee_name_dict = {
+                callee_node.split(':')[-1].split('.')[-1]: callee_node
+                for callee_node in callee_nodes[::-1]
+            }
+            callee_name_dict.update(callee_alias)
+
+        call_sites = analyze_dataflow(node, caller_code_tree)
+
+        for callee_name, pos_args, kw_args, assigned_vars in call_sites:
+            candidates = callee_name_dict.get(callee_name)
+            if not candidates:
+                candidates = global_name_dict.get(callee_name, [])
+            if not candidates:
+                continue
+            if not isinstance(candidates, list):
+                candidates = [candidates]
+
+            for callee_node in candidates:
+                if not graph.has_node(callee_node):
+                    continue
+
+                # Map positional args to parameter names using callee's param list
+                callee_params = graph.nodes[callee_node].get('params', [])
+                args_mapping = {}
+                for i, arg_str in enumerate(pos_args):
+                    if i < len(callee_params):
+                        args_mapping[callee_params[i]] = arg_str
+                args_mapping.update(kw_args)
+
+                # param_flow: caller -> callee (argument values flowing into parameters)
+                graph.add_edge(node, callee_node,
+                               type=EDGE_TYPE_PARAM_FLOW,
+                               args_mapping=args_mapping)
+                # return_flow: callee -> caller (return value flowing back to caller)
+                graph.add_edge(callee_node, node,
+                               type=EDGE_TYPE_RETURN_FLOW,
+                               assigned_vars=assigned_vars)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 
 def get_inner_nodes(query_node, src_node, graph):

@@ -30,7 +30,11 @@ def load_jsonl(filepath):
     Returns:
     A list of dictionaries representing the data in each line of the JSONL file.
     """
+<<<<<<< HEAD
     with open(filepath, "r", encoding="utf-8") as file:
+=======
+    with open(filepath, "r") as file:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         return [json.loads(line) for line in file]
 
 
@@ -42,6 +46,7 @@ def write_to_jsonl(data, filepath):
     data -- a list of dictionaries to write to the JSONL file
     filepath -- the path to the JSONL file to write
     """
+<<<<<<< HEAD
     with open(filepath, "w", encoding="utf-8") as file:
         for entry in data:
             file.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -54,6 +59,20 @@ def append_to_jsonl(data, filepath):
 
 def load_json(filepath):
     return json.load(open(filepath, "r", encoding="utf-8"))
+=======
+    with open(filepath, "w") as file:
+        for entry in data:
+            file.write(json.dumps(entry) + "\n")
+
+
+def append_to_jsonl(data, filepath):
+    with open(filepath, "a") as file:
+        file.write(json.dumps(data) + "\n")
+        
+
+def load_json(filepath):
+    return json.load(open(filepath, "r"))
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 
 def clear_file(filepath):

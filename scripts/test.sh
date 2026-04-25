@@ -2,6 +2,7 @@ export OPENAI_API_KEY="dummy"
 export OPENAI_API_BASE="http://localhost:8000/v1"
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
+<<<<<<< HEAD
 # =============================================================================
 # Quick single-benchmark test — Hybrid Memory (--use_dataflow)
 # Requires _df.pkl graph index; see gen_graph_index.sh (--use_dataflow section).
@@ -25,6 +26,8 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 #     --simple_desc \
 #     --use_dataflow
 
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 # export GRAPH_INDEX_DIR='./index_data/SWE-bench_Lite/graph_index_v2.3'
 # export BM25_INDEX_DIR='./index_data/SWE-bench_Lite/BM25_index'
 

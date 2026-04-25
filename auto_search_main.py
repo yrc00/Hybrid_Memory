@@ -51,6 +51,7 @@ from util.runtime.fn_call_converter import (
 # os.environ['LITELLM_LOG'] = 'DEBUG
 
 
+<<<<<<< HEAD
 def load_dataset_local_or_hf(dataset_name: str, split: str):
     """dataset_cache/{name}/{split}/instances.jsonl 가 있으면 로컬에서 로드,
     없으면 HuggingFace에서 다운로드한 뒤 리스트로 반환."""
@@ -94,6 +95,34 @@ def get_task_instruction(instance: dict, task: str = 'auto_search', include_pr=F
     if task.strip() == 'auto_search':
         template = auto_search.TASK_INSTRUECTION_DF if use_dataflow else auto_search.TASK_INSTRUECTION
         task_description = template.format(
+=======
+def filter_dataset(dataset, filter_column: str, used_list: str):
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.toml')
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            data = toml.load(file)
+            if used_list in data:
+                selected_ids = data[used_list]
+                logging.info(
+                    f'Filtering {len(selected_ids)} tasks from "selected_ids"...'
+                )
+                def filter_function(example):
+                    return example[filter_column] in selected_ids  # Replace 'id' with the actual field name in the dataset
+                filtered_dataset = dataset.filter(filter_function)
+                # subset = dataset[dataset[filter_column].isin(selected_ids)]
+                logging.info(f'Retained {len(filtered_dataset)} tasks after filtering')
+                return filtered_dataset
+    return dataset
+
+
+def get_task_instruction(instance: dict, task: str = 'auto_search', include_pr=False, include_hint=False):
+    output_format = None
+    instruction = ""
+    
+    # for auto-search pipeline
+    if task.strip() == 'auto_search':
+        task_description = auto_search.TASK_INSTRUECTION.format(
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
             package_name=instance['instance_id'].split('_')[0]
         )
     
@@ -130,8 +159,11 @@ def get_task_instruction(instance: dict, task: str = 'auto_search', include_pr=F
 
 def vanilla_process(result_queue, model_name, messages, temp=1.0):
     """Single-shot LLM call with no tools, no code execution — model only."""
+<<<<<<< HEAD
     # Reset inherited logging handlers to prevent BrokenPipeError on Manager proxy queues after fork
     logging.getLogger().handlers = []
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     try:
         response = litellm.completion(
             model=model_name,
@@ -164,11 +196,16 @@ def auto_search_process(result_queue,
                         temp=1.0,
                         max_iteration_num=20,
                         use_function_calling=True):
+<<<<<<< HEAD
     # Reset inherited logging handlers to prevent BrokenPipeError on Manager proxy queues after fork
     logging.getLogger().handlers = []
     if tools and ('hosted_vllm' in model_name
                   or 'qwen' in model_name.lower()
     #             #   or model_name=='azure/gpt-4o'
+=======
+    if tools and ('hosted_vllm' in model_name or 'qwen' in model_name.lower() 
+    #             #   or model_name=='azure/gpt-4o' 
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     #             #   or model_name == 'litellm_proxy/o3-mini-2025-01-31'
                 ):
         use_function_calling = False
@@ -177,7 +214,11 @@ def auto_search_process(result_queue,
     if not use_function_calling:
         # 转换message
         messages = convert_fncall_messages_to_non_fncall_messages(messages, tools, add_in_context_learning_example=False)
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     # code_history = []
     parser = ResponseParser()
     if not traj_data:
@@ -189,6 +230,7 @@ def auto_search_process(result_queue,
         traj_msgs = traj_data['messages']
         prompt_tokens = traj_data['usage']['prompt_tokens']
         completion_tokens = traj_data['usage']['completion_tokens']
+<<<<<<< HEAD
 
     # analysis mode tracking
     _call_count = 0
@@ -196,6 +238,9 @@ def auto_search_process(result_queue,
     _tool_calling = 0      # prompt tokens from subsequent calls (tool results in context)
     _tool_numbers = 0      # number of tool invocations
 
+=======
+        
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     cur_interation_num = 0
     last_message = None
     last_message_content = None
@@ -214,8 +259,12 @@ def auto_search_process(result_queue,
 
         try:
             # new conversation
+<<<<<<< HEAD
             if tools and ('hosted_vllm' in model_name
                           or 'qwen' in model_name.lower()):
+=======
+            if tools and ('hosted_vllm' in model_name or 'qwen' in model_name.lower()):
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 messages = convert_fncall_messages_to_non_fncall_messages(messages, tools, add_in_context_learning_example=False)
                 response = litellm.completion(
                     model=model_name,
@@ -256,8 +305,12 @@ def auto_search_process(result_queue,
         
         raw_response = deepcopy(response)
         # logging.info('response.choices[0].message')
+<<<<<<< HEAD
         if tools and ('hosted_vllm' in model_name
                       or 'qwen' in model_name.lower()
+=======
+        if tools and ('hosted_vllm' in model_name or 'qwen' in model_name.lower()
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                       or 'deepseek' in model_name
                       ):
             try:
@@ -281,6 +334,7 @@ def auto_search_process(result_queue,
         print(response.choices[0].message)
         messages.append(convert_to_json(raw_response.choices[0].message))
         traj_msgs.append(convert_to_json(raw_response.choices[0].message))
+<<<<<<< HEAD
         _call_count += 1
         if _call_count == 1:
             _input_token += response.usage.prompt_tokens
@@ -288,6 +342,10 @@ def auto_search_process(result_queue,
             _tool_calling += response.usage.prompt_tokens
         prompt_tokens += response.usage.prompt_tokens
         completion_tokens += response.usage.completion_tokens
+=======
+        prompt_tokens += response.usage.prompt_tokens
+        completion_tokens += response.usage.completion_tokens  
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
             
         actions = parser.parse(response)
         if not isinstance(actions, List):
@@ -311,7 +369,10 @@ def auto_search_process(result_queue,
                 traj_msgs.append({"role": "user", "content": fake_user_msg})
                 # continue
             elif action.action_type == ActionType.RUN_IPYTHON:
+<<<<<<< HEAD
                 _tool_numbers += 1
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 ipython_code = action.code.strip('`')
                 logging.info(f"Executing code:\n```\n{ipython_code}\n```")
                 function_response = execute_ipython(ipython_code)
@@ -355,6 +416,7 @@ def auto_search_process(result_queue,
         'tools': tools,
         'usage': {
             'prompt_tokens': prompt_tokens,
+<<<<<<< HEAD
             'completion_tokens': completion_tokens,
         },
         'token_analysis': {
@@ -363,6 +425,10 @@ def auto_search_process(result_queue,
             'tool_numbers': _tool_numbers,
             'output_token': completion_tokens,
         },
+=======
+            'completion_tokens': completion_tokens
+        }
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     }
     # return final_output, messages, traj_data
     result_queue.put((final_output, messages, traj_data))
@@ -397,9 +463,14 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
         raw_output_loc = []
         loc_trajs = {'trajs': []}
         total_prompt_tokens, total_completion_tokens = 0, 0
+<<<<<<< HEAD
         analysis_records = []  # per-trial token analysis (analysis mode only)
 
         for trial_idx in range(args.num_samples):
+=======
+
+        for _ in range(args.num_samples):
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
             logger.info("=" * 60)
             logger.info(f"==== rank {rank} begin localizing {instance_id} ====")
             max_attempt_num = args.max_attempt_num
@@ -416,9 +487,14 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                     if args.vanilla_mode:
                         system_prompt = "You are a helpful assistant for software bug localization."
                     elif args.use_function_calling:
+<<<<<<< HEAD
                         system_prompt = (function_calling.SYSTEM_PROMPT_DF
                                          if args.use_dataflow
                                          else function_calling.SYSTEM_PROMPT)
+=======
+                        system_prompt = function_calling.SYSTEM_PROMPT
+                        # system_prompt = CLAUDE_THINKING_INSTRUCTION
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                     else:
                         system_prompt = prompt_manager.system_message
 
@@ -436,6 +512,7 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                     logger.info(f"==== {instance_id} start {'vanilla' if args.vanilla_mode else 'auto'} search ====")
                     messages.append({
                         "role": "user",
+<<<<<<< HEAD
                         "content": get_task_instruction(
                             bug, include_pr=True, include_hint=not args.vanilla_mode,
                             use_dataflow=args.use_dataflow,
@@ -444,6 +521,13 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
 
                     ctx = mp.get_context('fork')  # use fork to inherit context!!
                     result_queue = ctx.Queue()  # pipe-based, fork-safe (no shared Manager socket)
+=======
+                        "content": get_task_instruction(bug, include_pr=True, include_hint=not args.vanilla_mode),
+                    })
+
+                    ctx = mp.get_context('fork')  # use fork to inherit context!!
+                    result_queue = ctx.Manager().Queue()
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                     tools = None
                     if args.vanilla_mode:
                         process = ctx.Process(target=vanilla_process, kwargs={
@@ -471,6 +555,7 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                             'use_function_calling': args.use_function_calling,
                         })
                     process.start()
+<<<<<<< HEAD
                     # NOTE: result_queue.get() MUST come before process.join().
                     # ctx.Queue() is pipe-based; if the subprocess calls put() with
                     # a large payload (full message history) the pipe buffer fills up
@@ -484,22 +569,36 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                     except Exception:
                         result = None
                     process.join(timeout=30)
+=======
+                    process.join(timeout=args.timeout)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                     if process.is_alive():
                         logger.warning(f"{instance_id} attempt {max_attempt_num} execution flow "
                                         f"reconstruction exceeded timeout. Terminating.")
                         process.terminate()
                         process.join()
                         raise TimeoutError
+<<<<<<< HEAD
                     if result is None:
                         raise TimeoutError
                     if isinstance(result, dict) and 'error' in result and result['type'] == 'BadRequestError':
                         if 'ContextWindowExceededError' in result['error']:
                             raise litellm.exceptions.ContextWindowExceededError(result['error'], args.model, args.model.split('/')[0])
+=======
+                    
+                    # loc_result, messages, traj_data = result_queue.get()
+                    result = result_queue.get(timeout=args.timeout + 60)
+                    if isinstance(result, dict) and 'error' in result and result['type'] == 'BadRequestError':
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                         raise litellm.BadRequestError(result['error'], args.model, args.model.split('/')[0])
                         # print(f"Error occurred in subprocess: {result['error']}")
                     else:
                         loc_result, messages, traj_data = result
+<<<<<<< HEAD
 
+=======
+                        
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 except Empty:
                     logger.warning(f"{instance_id} subprocess exited without result. Try again.")
                     max_attempt_num = max_attempt_num - 1
@@ -529,6 +628,7 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                 traj_data['time'] = loc_end_time - loc_start_time
                 loc_trajs['trajs'].append(traj_data)
 
+<<<<<<< HEAD
                 if args.analyze and 'token_analysis' in traj_data:
                     ta = traj_data['token_analysis']
                     analysis_records.append({
@@ -540,6 +640,8 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
                         'output_token': ta['output_token'],
                     })
 
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 # generate correct output or finish last attempt
                 raw_output_loc.append(loc_result)
                 break
@@ -598,21 +700,32 @@ def run_localize(rank, args, bug_queue, log_queue, output_file_lock, traj_file_l
             with traj_file_lock:
                 append_to_jsonl(loc_res, traj_file)
 
+<<<<<<< HEAD
         if args.analyze and analysis_records:
             analysis_file = os.path.join(args.output_folder, 'token_analysis.jsonl')
             with output_file_lock:
                 for record in analysis_records:
                     append_to_jsonl(record, analysis_file)
 
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         reset_current_issue()
 
 
 def localize(args):
+<<<<<<< HEAD
     bench_data = load_dataset_local_or_hf(args.dataset, args.split)
     bench_tests = filter_dataset(bench_data, 'instance_id', args.used_list)
     if args.eval_n_limit:
         eval_n_limit = min(args.eval_n_limit, len(bench_tests))
         bench_tests = bench_tests[:eval_n_limit]
+=======
+    bench_data = load_dataset(args.dataset, split=args.split)
+    bench_tests = filter_dataset(bench_data, 'instance_id', args.used_list)
+    if args.eval_n_limit:
+        eval_n_limit = min(args.eval_n_limit, len(bench_tests))
+        bench_tests = bench_tests.select(range(0, eval_n_limit))
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         logging.info(f'Limiting evaluation to first {eval_n_limit} instances.')
 
     manager = mp.Manager()
@@ -677,7 +790,11 @@ def merge(args):
         args.merge_file = args.merge_file.replace('.jsonl', f'_{args.ranking_method}.jsonl')
         
     clear_file(args.merge_file)
+<<<<<<< HEAD
     with open(args.output_file, 'r', encoding="utf-8") as file:
+=======
+    with open(args.output_file, 'r') as file:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         for line in file:
             loc_data = json.loads(line)
             if loc_data['found_files'] == [[]]:
@@ -696,7 +813,11 @@ def merge(args):
                 loc_data['found_files'] = ranked_files
                 loc_data['found_modules'] = ranked_modules
                 loc_data['found_entities'] = ranked_funcs
+<<<<<<< HEAD
             with open(args.merge_file, 'a', encoding="utf-8") as f:
+=======
+            with open(args.merge_file, 'a') as f:
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
                 f.write(json.dumps(loc_data) + '\n')
 
 
@@ -727,12 +848,15 @@ def main():
                  # fine-tuned model
                  "openai/qwen-7B", "openai/qwen-7B-128k", "openai/ft-qwen-7B", "openai/ft-qwen-7B-128k",
                  "openai/qwen-32B", "openai/qwen-32B-128k", "openai/ft-qwen-32B", "openai/ft-qwen-32B-128k",
+<<<<<<< HEAD
 
                  # models
                  "openai/Qwen/Qwen2.5-Coder-7B-Instruct", "openai/Qwen/Qwen2.5-Coder-32B-Instruct",
                  "openai/czlll/Qwen2.5-Coder-7B-CL", "openai/czlll/Qwen2.5-Coder-32B-CL",
                  "openai/mistralai/Devstral-Small-2-24B-Instruct-2512",
                  "openai/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         ]
     )
     parser.add_argument("--use_dataflow", action="store_true",
@@ -753,18 +877,26 @@ def main():
     parser.add_argument("--log_level", type=str, default='INFO')
     parser.add_argument("--timeout", type=int, default=900)
     parser.add_argument("--rerun_empty_location", action="store_true")
+<<<<<<< HEAD
     parser.add_argument("--analyze", action="store_true",
                         help="Analysis mode: record per-trial token usage "
                              "(input_token, tool_calling, tool_numbers, output_token) "
                              "to token_analysis.jsonl.")
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     args = parser.parse_args()
 
     args.output_file = os.path.join(args.output_folder, args.output_file)
     os.makedirs(args.output_folder, exist_ok=True)
 
     # write the arguments
+<<<<<<< HEAD
     with open(f"{args.output_folder}/args.json", "w", encoding="utf-8") as f:
         json.dump(vars(args), f, indent=4, ensure_ascii=False)
+=======
+    with open(f"{args.output_folder}/args.json", "w") as f:
+        json.dump(vars(args), f, indent=4)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
     logging.basicConfig(
         level=logging.getLevelName(args.log_level),

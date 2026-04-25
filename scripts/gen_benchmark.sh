@@ -5,14 +5,19 @@ python util/benchmark/gen_oracle_locations.py \
     --dataset SWE-bench/SWE-bench_Lite \
     --split test \
     --output_dir evaluation/gt_location \
+<<<<<<< HEAD
     --repo_base_dir playground/repo_base \
     --max_edit_file_num 5
+=======
+    --repo_base_dir playground/repo_base
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 # Verified
 python util/benchmark/gen_oracle_locations.py \
     --dataset SWE-bench/SWE-bench_Verified \
     --split test \
     --output_dir evaluation/gt_location \
+<<<<<<< HEAD
     --repo_base_dir playground/repo_base \
     --max_edit_file_num 5
 
@@ -24,3 +29,6 @@ python util/benchmark/gen_oracle_locations.py \
     --output_dir evaluation/gt_location \
     --repo_base_dir playground/repo_base \
     --max_edit_file_num 5
+=======
+    --repo_base_dir playground/repo_base
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e

@@ -60,6 +60,7 @@ Return just the location(s)
 Note: Your thinking should be thorough and so it's fine if it's very long.
 """
 
+<<<<<<< HEAD
 TASK_INSTRUECTION_DF = TASK_INSTRUECTION + """
 ---
 ## Hybrid Memory Reasoning Guide
@@ -76,6 +77,8 @@ When localizing bugs using the Hybrid Memory graph, follow this exploration orde
 ※ 실제 수정 위치는 값이 읽히는 곳이 아닌, 값이 변환되거나 결정되는 중간 지점에 있을 가능성이 높다.
 """
 
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 FAKE_USER_MSG_FOR_LOC = (
     'Verify if the found locations contain all the necessary information to address the issue, and check for any relevant references in other parts of the codebase that may not have appeared in the search results. '
     'If not, continue searching for additional locations related to the issue.\n'

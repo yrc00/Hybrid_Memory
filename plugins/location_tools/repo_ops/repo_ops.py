@@ -1068,6 +1068,7 @@ def explore_tree_structure(
     return rtn_str.strip()
 
 
+<<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # Hybrid Memory query tools (--use_dataflow mode)
 # ---------------------------------------------------------------------------
@@ -1281,13 +1282,19 @@ def get_invoke_meta(src_node_id: str, dst_node_id: str) -> str:
     return '\n'.join(lines).strip()
 
 
+=======
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 __all__ = [
     # 'get_entity_contents',
     'search_code_snippets',
     'explore_graph_structure',
     'explore_tree_structure',
+<<<<<<< HEAD
     'get_exception_boundaries',
     'get_value_transforms',
     'get_inherit_meta',
     'get_invoke_meta',
 ]
+=======
+]
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e

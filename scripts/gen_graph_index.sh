@@ -1,5 +1,6 @@
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
+<<<<<<< HEAD
 # =============================================================================
 # Base graph index (contains / invokes / imports / inherits edges only)
 # Graph files: index_data/<bench>/graph_index_v3.0/<instance_id>.pkl
@@ -14,6 +15,26 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 #         --download_repo
 
 # # generate base graph index for SWE-bench_Verified
+=======
+# # generate graph index for SWE-bench_Lite
+# python dependency_graph/batch_build_graph.py \
+#         --dataset 'czlll/SWE-bench_Lite' \
+#         --split 'test' \
+#         --repo_path playground/build_graph \
+#         --num_processes 32 \
+#         --download_repo
+
+# generate graph index for SWE-bench_Lite
+python dependency_graph/batch_build_graph.py \
+        --dataset 'SWE-bench/SWE-bench_Lite' \
+        --split 'test' \
+        --repo_path playground/build_graph \
+        --num_processes 30 \
+        --download_repo
+
+
+# # generate graph index SWE-bench_Verified
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 # python dependency_graph/batch_build_graph.py \
 #         --dataset 'SWE-bench/SWE-bench_Verified' \
 #         --split 'test' \
@@ -21,12 +42,17 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 #         --num_processes 30 \
 #         --download_repo
 
+<<<<<<< HEAD
 # # generate base graph index for SWE-bench-Live
+=======
+# # generate graph index for SWE-bench_Verified
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 # python dependency_graph/batch_build_graph.py \
 #         --dataset 'SWE-bench-Live/SWE-bench-Live' \
 #         --split 'lite' \
 #         --repo_path playground/build_graph \
 #         --num_processes 30 \
+<<<<<<< HEAD
 #         --download_repo
 
 
@@ -71,3 +97,6 @@ python dependency_graph/batch_build_graph.py \
         --num_processes 30 \
         --download_repo \
         --use_dataflow
+=======
+#         --download_repo
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e

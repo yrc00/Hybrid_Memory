@@ -67,12 +67,20 @@ Notes:
 
 """
 
+<<<<<<< HEAD
 _HYBRID_MEMORY_DESCRIPTION_ADDON = """
 Hybrid Memory Extensions (available in this graph):
 * 'exception_boundary': connects a raise site (function where an exception is raised) to a catch site (function that handles it). Use this to trace file-crossing exception flows not covered by invoke edges.
 * 'value_transform': marks a type-conversion operation within a function (e.g. str→int, json.loads). Use this when a bug may stem from incorrect parsing or type casting.
 * 'inherits' edges carry extra meta: child_has_init, child_calls_super_init, parent_init_sets, child_init_sets, missing_attrs. Use get_inherit_meta() to retrieve them.
 * 'invokes' edges carry extra meta: return_nullable, nullable_reason, return_bound_to, guard_before_use, first_use_expr, first_use_line, use_type. Use get_invoke_meta() to retrieve them.
+=======
+_DATAFLOW_DESCRIPTION_ADDON = """
+Data Flow Extensions (available in this graph):
+* 'param_flow' (caller → callee): added at each call site; edge attribute `args_mapping` maps parameter names to the argument expressions passed by the caller.
+* 'return_flow' (callee → caller): added at each call site; edge attribute `assigned_vars` lists the variables in the caller that receive the return value.
+Use these edges to trace how data moves across function boundaries — e.g., find all callers that pass a specific variable as an argument, or locate where a function's return value is consumed.
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 
 """
 
@@ -127,10 +135,17 @@ _DEPENDENCY_TYPE_FILTER_DESC_BASE = (
     "Available types: 'contains', 'imports', 'invokes', 'inherits'."
 )
 
+<<<<<<< HEAD
 _DEPENDENCY_TYPE_FILTER_DESC_HYBRID = (
     "List of dependency types to include in the traversal. If None, all dependency types are included. "
     "Available types: 'contains', 'imports', 'invokes', 'inherits', "
     "'exception_boundary' (raise→catch cross-file flow), 'value_transform' (type conversion within a function)."
+=======
+_DEPENDENCY_TYPE_FILTER_DESC_DATAFLOW = (
+    "List of dependency types to include in the traversal. If None, all dependency types are included. "
+    "Available types: 'contains', 'imports', 'invokes', 'inherits', "
+    "'param_flow' (caller→callee argument mapping), 'return_flow' (callee→caller return value flow)."
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
 )
 
 _STRUCTURE_EXPLORER_PARAMETERS_BASE = {
@@ -185,12 +200,21 @@ _STRUCTURE_EXPLORER_PARAMETERS_BASE = {
 
 def make_explore_tree_structure(use_dataflow: bool = False, simple_desc: bool = False) -> ChatCompletionToolParam:
     """Return an ExploreTreeStructure tool whose description and parameter hints
+<<<<<<< HEAD
     reflect whether hybrid memory edges are present in the graph."""
     import copy
     params = copy.deepcopy(_STRUCTURE_EXPLORER_PARAMETERS_BASE)
     if use_dataflow:
         params['properties']['dependency_type_filter']['description'] = _DEPENDENCY_TYPE_FILTER_DESC_HYBRID
         desc = _STRUCTURE_EXPLORER_DESCRIPTION_BASE + _HYBRID_MEMORY_DESCRIPTION_ADDON
+=======
+    reflect whether data flow edges (param_flow / return_flow) are present in the graph."""
+    import copy
+    params = copy.deepcopy(_STRUCTURE_EXPLORER_PARAMETERS_BASE)
+    if use_dataflow:
+        params['properties']['dependency_type_filter']['description'] = _DEPENDENCY_TYPE_FILTER_DESC_DATAFLOW
+        desc = _STRUCTURE_EXPLORER_DESCRIPTION_BASE + _DATAFLOW_DESCRIPTION_ADDON
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
         example = _TREE_EXAMPLE
     else:
         desc = _STRUCTURE_EXPLORER_DESCRIPTION_BASE
@@ -212,4 +236,8 @@ def make_explore_tree_structure(use_dataflow: bool = False, simple_desc: bool = 
 
 # Convenience module-level instances (use_dataflow=False)
 ExploreTreeStructure = make_explore_tree_structure(use_dataflow=False, simple_desc=False)
+<<<<<<< HEAD
 ExploreTreeStructure_simple = make_explore_tree_structure(use_dataflow=False, simple_desc=True)
+=======
+ExploreTreeStructure_simple = make_explore_tree_structure(use_dataflow=False, simple_desc=True)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e

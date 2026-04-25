@@ -10,6 +10,7 @@ from collections import defaultdict
 
 def get_oracle_filenames(patch):
     """
+<<<<<<< HEAD
     Returns the filenames that are changed in the patch.
     For new files (source is /dev/null) uses the target file path.
     """
@@ -21,6 +22,17 @@ def get_oracle_filenames(patch):
         else:
             f = patch_file.source_file.split("a/", 1)[-1]
         gold_docs.add(f)
+=======
+    Returns the filenames that are changed in the patch
+    """
+    source_files = {
+        patch_file.source_file.split("a/", 1)[-1]
+        for patch_file in unidiff.PatchSet(patch)
+    }
+    gold_docs = set()
+    for source_file in source_files:
+        gold_docs.add(source_file)
+>>>>>>> 77306e872c6bb472e028b2923056c57a53c5f75e
     return gold_docs
 
 
